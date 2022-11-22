@@ -126,6 +126,7 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+  p->traceid = 0;
 
   return p;
 }
@@ -275,8 +276,6 @@ fork(void)
   }
   np->sz = p->sz;
 
-  np->traceid = p->traceid;
-
   np->parent = p;
 
   // copy saved user registers.
@@ -292,6 +291,8 @@ fork(void)
   np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
+
+  np->traceid = p->traceid;
 
   pid = np->pid;
 
@@ -694,4 +695,18 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+int 
+nproc(void)
+{
+  struct proc *p;
+  int cnt = 0;
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+    else
+      cnt++;
+  }
+  return cnt;
 }
