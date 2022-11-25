@@ -38,7 +38,8 @@ procinit(void)
       if(pa == 0)
         panic("kalloc");
       uint64 va = KSTACK((int) (p - proc));
-      kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+      // kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+      pkpgtblmap(p->kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
       p->kstack = va;
   }
   kvminithart();
@@ -121,6 +122,23 @@ found:
     return 0;
   }
 
+  // An empty kernel page table.
+  p->kpgtbl = pkpgtblinit();
+  if(p->kpgtbl == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+
+  // char *pa = kalloc();
+  // if(pa == 0)
+  //   panic("kalloc");
+  // uint64 va = KSTACK((int) (p - proc));
+  // kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+  // p->kstack = va;
+
+  // pkpgtblmap(p->kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&p->context, 0, sizeof(p->context));
@@ -141,6 +159,8 @@ freeproc(struct proc *p)
   p->trapframe = 0;
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
+  if(p->kpgtbl)
+    freewalk_pkpgtbl(p->kpgtbl);
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
@@ -475,9 +495,14 @@ scheduler(void)
         c->proc = p;
         swtch(&c->context, &p->context);
 
+        w_satp(MAKE_SATP(p->kpgtbl));
+        sfence_vma();
+
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
+
+        kvminithart();
 
         found = 1;
       }
