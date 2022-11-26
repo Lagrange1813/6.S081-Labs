@@ -490,8 +490,12 @@ pkpgtblinit()
 {
   pagetable_t pagetable;
 
-  pagetable = (pagetable_t) kalloc();
-  memset(pagetable, 0, PGSIZE);
+  pagetable = uvmcreate();
+
+  // pagetable = (pagetable_t) kalloc();
+  // memset(pagetable, 0, PGSIZE);
+
+  if (pagetable == 0) return 0;
 
   // uart registers
   pkpgtblmap(pagetable, UART0, UART0, PGSIZE, PTE_R | PTE_W);

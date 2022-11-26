@@ -159,8 +159,19 @@ freeproc(struct proc *p)
   p->trapframe = 0;
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
+  
+  // free the kernel stack in the RAM
+  if (p->kstack) {
+    pte_t* pte = walk(p->kpgtbl, p->kstack, 0);
+    if (pte == 0)
+      panic("freeproc: walk");
+    kfree((void*)PTE2PA(*pte));
+  }
+  p->kstack = 0;
+  
   if(p->kpgtbl)
     freewalk_pkpgtbl(p->kpgtbl);
+
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
