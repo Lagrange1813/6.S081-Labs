@@ -29,17 +29,7 @@ procinit(void)
   
   initlock(&pid_lock, "nextpid");
   for(p = proc; p < &proc[NPROC]; p++) {
-      initlock(&p->lock, "proc");
-
-      // Allocate a page for the process's kernel stack.
-      // Map it high in memory, followed by an invalid
-      // guard page.
-      char *pa = kalloc();
-      if(pa == 0)
-        panic("kalloc");
-      uint64 va = KSTACK((int) (p - proc));
-      kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
-      p->kstack = va;
+    initlock(&p->lock, "proc");
   }
   kvminithart();
 }
@@ -122,8 +112,8 @@ found:
   }
 
   // An empty kernel page table.
-  p->kpgtbl = pkpgtblinit();
-  if(p->kpgtbl == 0){
+  p->kernel_pgtbl = kernel_pgtbl_init();
+  if(p->kernel_pgtbl == 0){
     freeproc(p);
     release(&p->lock);
     return 0;
@@ -133,7 +123,7 @@ found:
   if(pa == 0)
     panic("kalloc");
   uint64 va = KSTACK((int) (p - proc));
-  pkpgtblmap(p->kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+  uvmmap(p->kernel_pgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
   p->kstack = va;
 
   // Set up new context to start executing at forkret,
@@ -154,22 +144,24 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
+
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
   
   // free the kernel stack in the RAM
   if (p->kstack) {
-    pte_t* pte = walk(p->kpgtbl, p->kstack, 0);
+    pte_t* pte = walk(p->kernel_pgtbl, p->kstack, 0);
     if (pte == 0)
       panic("freeproc: walk");
     kfree((void*)PTE2PA(*pte));
   }
   p->kstack = 0;
   
-  if(p->kpgtbl)
-    freewalk_pkpgtbl(p->kpgtbl);
+  if(p->kernel_pgtbl)
+    freewalk_pgtbl(p->kernel_pgtbl);
 
   p->pagetable = 0;
+  p->kernel_pgtbl = 0;
   p->sz = 0;
   p->pid = 0;
   p->parent = 0;
@@ -501,10 +493,11 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        swtch(&c->context, &p->context);
 
-        w_satp(MAKE_SATP(p->kpgtbl));
+        w_satp(MAKE_SATP(p->kernel_pgtbl));
         sfence_vma();
+
+        swtch(&c->context, &p->context);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.

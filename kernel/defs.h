@@ -179,9 +179,9 @@ int             copyout(pagetable_t, uint64, char *, uint64);
 int             copyin(pagetable_t, char *, uint64, uint64);
 int             copyinstr(pagetable_t, char *, uint64, uint64);
 void            vmprint(pagetable_t pagetable);
-void            pkpgtblmap(pagetable_t pgtbl, uint64 va, uint64 pa, uint64 sz, int perm);
-pagetable_t     pkpgtblinit();
-void            freewalk_pkpgtbl(pagetable_t pagetable);
+void            uvmmap(pagetable_t pgtbl, uint64 va, uint64 pa, uint64 sz, int perm);
+pagetable_t     kernel_pgtbl_init();
+void            freewalk_pgtbl(pagetable_t pagetable);
 pte_t *         walk(pagetable_t pagetable, uint64 va, int alloc);
 
 // plic.c
