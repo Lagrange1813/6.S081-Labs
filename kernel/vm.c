@@ -490,12 +490,12 @@ pkpgtblinit()
 {
   pagetable_t pagetable;
 
-  pagetable = uvmcreate();
+  // pagetable = uvmcreate();
 
-  // pagetable = (pagetable_t) kalloc();
-  // memset(pagetable, 0, PGSIZE);
+  pagetable = (pagetable_t) kalloc();
+  memset(pagetable, 0, PGSIZE);
 
-  if (pagetable == 0) return 0;
+  // if (pagetable == 0) return 0;
 
   // uart registers
   pkpgtblmap(pagetable, UART0, UART0, PGSIZE, PTE_R | PTE_W);
@@ -525,13 +525,13 @@ pkpgtblinit()
 // Recursively free page-table pages
 // but retain leaf physical addresses
 void
-freewalk_pkpgtbl(pagetable_t pagetable) {
-  for(int i = 0; i < 512; i++){
+freewalk_pkpgtbl(pagetable_t pagetable) 
+{
+  for(int i = 0; i < 512; i++) { 
     pte_t pte = pagetable[i];
-    if((pte & PTE_V)){
+    if((pte & PTE_V)) {
       pagetable[i] = 0;
-      if ((pte & (PTE_R|PTE_W|PTE_X)) == 0)
-      {
+      if ((pte & (PTE_R|PTE_W|PTE_X)) == 0) {
         uint64 child = PTE2PA(pte);
         freewalk_pkpgtbl((pagetable_t)child);
       }
