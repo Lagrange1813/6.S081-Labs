@@ -38,8 +38,7 @@ procinit(void)
       if(pa == 0)
         panic("kalloc");
       uint64 va = KSTACK((int) (p - proc));
-      // kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
-      pkpgtblmap(p->kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+      kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
       p->kstack = va;
   }
   kvminithart();
@@ -130,12 +129,13 @@ found:
     return 0;
   }
 
-  // char *pa = kalloc();
-  // if(pa == 0)
-  //   panic("kalloc");
-  // uint64 va = KSTACK((int) (p - proc));
+  char *pa = kalloc();
+  if(pa == 0)
+    panic("kalloc");
+  uint64 va = KSTACK((int) (p - proc));
   // kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
-  // p->kstack = va;
+  pkpgtblmap(p->kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+  p->kstack = va;
 
   // pkpgtblmap(p->kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
 
