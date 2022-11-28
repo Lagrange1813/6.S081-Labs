@@ -183,6 +183,11 @@ void            uvmmap(pagetable_t pgtbl, uint64 va, uint64 pa, uint64 sz, int p
 pagetable_t     kernel_pgtbl_init();
 void            freewalk_pgtbl(pagetable_t pagetable);
 pte_t *         walk(pagetable_t pagetable, uint64 va, int alloc);
+void            u2kvmcopy(pagetable_t pagetable, pagetable_t kernel_pgtbl, uint64 oldsz, uint64 newsz);
+
+// vmcopyin.c
+int             copyin_new(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len);
+int             copyinstr_new(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max);
 
 // plic.c
 void            plicinit(void);

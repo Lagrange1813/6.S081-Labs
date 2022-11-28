@@ -19,7 +19,6 @@ exec(char *path, char **argv)
   struct inode *ip;
   struct proghdr ph;
   pagetable_t pagetable = 0, oldpagetable;
-  pagetable_t kernel_pagetable = 0;
   struct proc *p = myproc();
 
   begin_op();
@@ -37,9 +36,6 @@ exec(char *path, char **argv)
     goto bad;
 
   if((pagetable = proc_pagetable(p)) == 0)
-    goto bad;
-
-  if((kernel_pagetable = kernel_pgtbl_init()) == 0)
     goto bad;
 
   // Load program into memory.
@@ -74,10 +70,14 @@ exec(char *path, char **argv)
   uint64 sz1;
   if((sz1 = uvmalloc(pagetable, sz, sz + 2*PGSIZE)) == 0)
     goto bad;
+  if(sz1 >= PLIC)
+    goto bad;
   sz = sz1;
   uvmclear(pagetable, sz-2*PGSIZE);
   sp = sz;
   stackbase = sp - PGSIZE;
+
+  u2kvmcopy(pagetable, p->kernel_pgtbl, 0, sz);
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -115,7 +115,6 @@ exec(char *path, char **argv)
   // Commit to the user image.
   oldpagetable = p->pagetable;
   p->pagetable = pagetable;
-  p->kernel_pgtbl = kernel_pagetable;
   p->sz = sz;
   p->trapframe->epc = elf.entry;  // initial program counter = main
   p->trapframe->sp = sp; // initial stack pointer
