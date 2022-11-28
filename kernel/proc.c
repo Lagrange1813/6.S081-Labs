@@ -295,6 +295,12 @@ fork(void)
   }
   np->sz = p->sz;
 
+  if(uvmcopy(p->kernel_pgtbl, np->kernel_pgtbl, p->sz) < 0){
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
+
   np->parent = p;
 
   // copy saved user registers.
