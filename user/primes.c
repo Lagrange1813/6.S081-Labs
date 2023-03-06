@@ -2,64 +2,61 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
-void transfer(int pi[2]);
+void 
+transfer(int lp[2], int prime);
 
 int
 main()
 {
-  close(0);
+  int p[2];
+  pipe(p);
 
-  int pi[2];
-  pipe(pi);
-  
-  int pid;
-  pid = fork();
-
-  if (pid==0) {
-    transfer(pi);
+  int pid = fork();
+  if (pid == 0) {
+    close(p[1]);
+    transfer(p, 2);
   } else {
-    close(pi[0]);
-
+    close(p[0]);
     for (int i = 2; i <= 35; i++) {
-      write(pi[1], &i, 1);
+      write(p[1], &i, 4);
     }
-
-    close(pi[1]);
-
-    wait((int *)0);
+    close(p[1]);
+    wait(0);
   }
-
+  
   exit(0);
 }
 
-void transfer(int pi[2]) {
-  close(pi[1]);
+void 
+transfer(int lp[2], int prime) 
+{
+  int buf = 0;
+  int hasRight = 0;
+  int rp[2];
 
-  int buf;
-  if (read(pi[0], &buf, 1) == 0) exit(0);
-
-  int child[2];
-  pipe(child);
-
-  int pid = 0;
-  pid = fork();
-
-  if (pid == 0) {
-    transfer(child);
-  } else {
-    close(child[0]);
-
-    printf("prime %d\n", buf);
-    int prime = buf;
-
-    while (read(pi[0], &buf, 1) != 0) {
-      if (buf % prime != 0) {
-        write(child[1], &buf, 1);
+  printf("prime %d\n", prime);
+  while (read(lp[0], &buf, 4) != 0) {
+    if (buf % prime != 0) {
+      if (hasRight == 0) {
+        pipe(rp);
+        int pid = fork();
+        if (pid == 0) {
+          close(rp[1]);
+          transfer(rp, buf);
+          break;
+        } else {
+          close(rp[0]);
+          hasRight = 1;
+        }
+      } else {
+        write(rp[1], &buf, 4);
       }
-    }
-
-    close(child[1]);
-    wait((int *)0);
-    exit(0);
+    } 
   }
+
+  if (hasRight) {
+    close(rp[1]);
+    wait(0);
+  }
+  exit(0);
 }

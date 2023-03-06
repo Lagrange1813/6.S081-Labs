@@ -22,12 +22,12 @@ find(char * path, char * target)
   struct stat st;
 
   if((fd = open(path, 0)) < 0){
-    fprintf(2, "ls: cannot open %s\n", path);
+    fprintf(2, "find: cannot open %s\n", path);
     return;
   }
 
   if(fstat(fd, &st) < 0){
-    fprintf(2, "ls: cannot stat %s\n", path);
+    fprintf(2, "find: cannot stat %s\n", path);
     close(fd);
     return;
   }
@@ -35,7 +35,7 @@ find(char * path, char * target)
   switch(st.type){
   case T_DIR:
     if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
-      printf("ls: path too long\n");
+      printf("find: path too long\n");
       break;
     }
     strcpy(buf, path);
@@ -47,7 +47,7 @@ find(char * path, char * target)
       memmove(p, de.name, DIRSIZ);
       p[DIRSIZ] = 0;
       if(stat(buf, &st) < 0){
-        printf("ls: cannot stat %s\n", buf);
+        printf("find: cannot stat %s\n", buf);
         continue;
       }
       if (!strcmp(getname(buf), target) && st.type == T_FILE) 
@@ -66,7 +66,7 @@ int
 main(int argc, char *argv[])
 {
   if(argc != 3){
-    printf("find: wrong arguments!\n");
+    fprintf(2, "find: wrong arguments!\n");
     exit(0);
   }
 
