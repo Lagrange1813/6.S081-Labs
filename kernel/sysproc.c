@@ -120,7 +120,7 @@ sysinfo(uint64 addr)
   st.nproc = nproc();
 
   if(copyout(p->pagetable, addr, (char *)&st, sizeof(st)) < 0)
-      return -1;
+    return -1;
 
   return 0;
 }

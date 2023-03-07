@@ -85,7 +85,6 @@ int
 freemem(void)
 {
   int cnt = 0;
-
   struct run *r;
 
   acquire(&kmem.lock);
@@ -96,5 +95,5 @@ freemem(void)
   }
   release(&kmem.lock);
 
-  return cnt*PGSIZE;
+  return cnt * PGSIZE;
 }
