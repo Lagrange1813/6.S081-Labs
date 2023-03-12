@@ -174,16 +174,16 @@ int             uvmcopy(pagetable_t, pagetable_t, uint64);
 void            uvmfree(pagetable_t, uint64);
 void            uvmunmap(pagetable_t, uint64, uint64, int);
 void            uvmclear(pagetable_t, uint64);
+pte_t *         walk(pagetable_t pagetable, uint64 va, int alloc);
 uint64          walkaddr(pagetable_t, uint64);
 int             copyout(pagetable_t, uint64, char *, uint64);
 int             copyin(pagetable_t, char *, uint64, uint64);
 int             copyinstr(pagetable_t, char *, uint64, uint64);
 void            vmprint(pagetable_t pagetable);
-void            uvmmap(pagetable_t pgtbl, uint64 va, uint64 pa, uint64 sz, int perm);
-pagetable_t     kernel_pgtbl_init();
-void            freewalk_pgtbl(pagetable_t pagetable);
-pte_t *         walk(pagetable_t pagetable, uint64 va, int alloc);
-void            u2kvmcopy(pagetable_t pagetable, pagetable_t kernel_pgtbl, uint64 oldsz, uint64 newsz);
+void            proc_kernel_vminit(struct proc *p);
+void            proc_kernel_vmmap(struct proc *p, uint64 va, uint64 pa, uint64 sz, int perm);
+void            proc_kernel_free(pagetable_t pagetable, int level);
+void            proc_kernel_vmcopy(pagetable_t src, pagetable_t dst, uint64 start, uint64 sz);
 
 // vmcopyin.c
 int             copyin_new(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len);
