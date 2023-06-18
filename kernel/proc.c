@@ -127,6 +127,9 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  p->accumulated_ticks = 0;
+  p->has_sigreturn = 1;
+
   return p;
 }
 
